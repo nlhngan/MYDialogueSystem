@@ -1,18 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using XNode;
 using UnityEngine;
-using XNode;
 
-[CreateNodeMenu("Dialogue/Start")]
+[NodeTint("#4CAF50")]
 public class StartNode : BaseNode {
-	public BaseNode firstNode;
 
-	public override string GetNodeTypeString()
-    {
-        return "StartNode";
+    [Output] public BaseNode output;
+
+    public override object GetValue(NodePort port) {
+        return null;
     }
-
-	public override void OnEnterNode() {}
-	public override object GetValue(NodePort node) { return null; }
-
 }

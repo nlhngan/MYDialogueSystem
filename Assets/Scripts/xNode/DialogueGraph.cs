@@ -1,10 +1,11 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using XNode;
+﻿using XNode;
 
-[CreateAssetMenu(menuName="Dialogue/Dialogue graph")]
-public class DialogueGraph : NodeGraph { 
-    // runtime current node reference
-	[HideInInspector] public BaseNode current;
+[CreateAssetMenu(fileName = "DialogueGraph", menuName = "Dialogue/Dialogue Graph")]
+public class DialogueGraph : NodeGraph {
+    public StartNode GetStartNode() {
+        foreach (var node in nodes) {
+            if (node is StartNode start) return start;
+        }
+        return null;
+    }
 }
