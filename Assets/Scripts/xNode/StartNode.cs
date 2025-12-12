@@ -5,11 +5,14 @@ using XNode;
 
 [CreateNodeMenu("Dialogue/Start")]
 public class StartNode : BaseNode {
-	public BaseNode firstNode;
+	[Output] public BaseNode firstNode;
 
-	public override string GetNodeTypeString()
+	public override string GetNodeTypeString() {return "StartNode";}
+	public BaseNode GetFirst()
     {
-        return "StartNode";
+        NodePort port = GetOutputPort("firstNode");
+		if (!port.IsConnected) return null;
+		return port.Connection.node as BaseNode;
     }
 
 	public override void OnEnterNode() {}

@@ -7,7 +7,10 @@ using System.Linq;
 
 public class NodeParser : MonoBehaviour
 {
+    [Header("Reference")]
+    public QwenRuntime qwen;
     public DialogueGraph graph;
+
     [Header("UI")]
     public Text speaker;
     public Text dialogueText;
@@ -45,7 +48,8 @@ public class NodeParser : MonoBehaviour
                 StartNode s = (StartNode)b;
                 graph.current = s.firstNode;
                 continue;
-            } else if (b is DialogueNode)
+            } 
+            if (b is DialogueNode)
             {
                 DialogueNode dn = (DialogueNode)b;
                 // update UI
@@ -55,33 +59,43 @@ public class NodeParser : MonoBehaviour
                 ClearChoiceButtons();
 
                 // show dialogue
-                if (textRevealSpeed <= 0f)
+                // default static dialogue
+                if (!dn.UsesLLM())
                 {
-                    dialogueText.text = dn.GetDialogueText();
-                } else
+                    yield return DisplayText(dn.GetDialogueText());
+                }
+                else 
+                // LLM
                 {
-                    yield return StartCoroutine(TypeText(dn.GetDialogueText()));
+                    string llmText = null;
+
+                    bool done = false;
+                    yield return qwen.Generate(
+                        dn.GetPersonaJSON(),
+                        dn.systemPrompt,
+                        dn.userPrompt,
+                        (resp) => {llmText=resp; done=true;}
+                    );
+                    yield return new WaitUntil(() => done);
+                    yield return DisplayText(llmText);
                 }
 
-                // if node has choices
+                // branching if node has choices
                 if (dn.choices != null && dn.choices.Length > 0)
                 {
                     // build buttons
                     int choiceCount = dn.choices.Length;
                     for (int i = 0; i<choiceCount; i++)
                     {
-                        string label = dn.choices[i];
-                        Button btn = Instantiate(choiceButtonPrefab, choicesContainer);
-                        Text btnText = btn.GetComponentInChildren<Text>();
-                        if (btnText != null) btnText.text = label;
                         int idx = i;
-                        btn.onClick.AddListener(() =>
-                        {
-                            OnChoiceSelected(dn, idx);
-                        });
+                        // string label = dn.choices[i];
+                        Button btn = Instantiate(choiceButtonPrefab, choicesContainer);
+                        btn.GetComponentInChildren<Text>().text = dn.choices[i];
+                        // if (btnText != null) btnText.text = label;                
+                        btn.onClick.AddListener(() => OnChoiceSelected(dn, idx));
                     }
                     // yield until graph.current changes away from dn
-                    yield return new WaitUntil(()=> graph.current!=dn);
+                    yield return new WaitUntil(() => graph.current!=dn);
                 } else
                 {
                     // linear node; use nextNodes[0] as next if set
@@ -116,15 +130,21 @@ public class NodeParser : MonoBehaviour
         Debug.Log("dialogue finished");
     }
 
-    IEnumerator TypeText(string fullText)
+    IEnumerator DisplayText(string text)
     {
-        dialogueText.text ="";
-        float delay = 1f / Mathf.Max(0.0001f, textRevealSpeed); // ??
-        for (int i = 0; i< fullText.Length; i++)
+        if (textRevealSpeed <= 0f) dialogueText.text = text;
+        else
         {
-            dialogueText.text += fullText[i];
-            yield return new WaitForSeconds(delay);
+            dialogueText.text ="";
+            float delay = 1f / Mathf.Max(0.0001f, textRevealSpeed); // ??
+            foreach (char c in text)
+            {
+                dialogueText.text += c;
+                yield return new WaitForSeconds(delay);
+            }
         }
+        
+        
     }
 
     IEnumerator WaitForClick()

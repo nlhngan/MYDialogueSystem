@@ -16,7 +16,7 @@ MonoBehaviour:
   - {fileID: 2182344023817487821}
   - {fileID: 4757257895934786305}
   - {fileID: 3443495367680608985}
-  current: {fileID: 0}
+  current: {fileID: 4757257895934786305}
 --- !u!114 &2182344023817487821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -32,8 +32,18 @@ MonoBehaviour:
   graph: {fileID: 11400000}
   position: {x: -376, y: -136}
   ports:
-    keys: []
-    values: []
+    keys:
+    - firstNode
+    values:
+    - _fieldName: firstNode
+      _node: {fileID: 2182344023817487821}
+      _typeQualifiedName: BaseNode, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
+        PublicKeyToken=null
+      connections: []
+      _direction: 1
+      _connectionType: 0
+      _typeConstraint: 0
+      _dynamic: 0
   _guid: 
   firstNode: {fileID: 4757257895934786305}
 --- !u!114 &3443495367680608985
@@ -84,6 +94,11 @@ MonoBehaviour:
   dialogueLine: meow meow meow
   choices: []
   nextNodes: []
+  personaJSON: "{\n    \"name\": \"kitty\",\n    \"bio\": \"A talktative NPC kitty.\",\n   
+    \"constraints\": \"Keep responses short.\"\n}"
+  systemPrompt: You're roleplaying the character described in the persona JSON.
+  userPrompt: continue the conversation in character.
+  useLLM: 1
 --- !u!114 &4757257895934786305
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -132,4 +147,9 @@ MonoBehaviour:
   dialogueLine: this is a line
   choices: []
   nextNodes:
-  - {fileID: 4757257895934786305}
+  - {fileID: 3443495367680608985}
+  personaJSON: "{\n    \"name\": \"Ngan\",\n    \"bio\": \"depressed person.\",\n   
+    \"constraints\": \"Keep responses short.\"\n}"
+  systemPrompt: You're roleplaying the character described in the persona JSON.
+  userPrompt: continue the conversation in character.
+  useLLM: 1

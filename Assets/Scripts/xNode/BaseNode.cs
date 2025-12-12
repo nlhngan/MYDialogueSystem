@@ -15,15 +15,14 @@ public abstract class BaseNode : Node {
         }
     }
 
-	public virtual string GetNodeTypeString()
-    {
-        return "BaseNode";
-    }
+	public virtual string GetNodeTypeString() {return "BaseNode";}
 
 	// content helpers
-	public virtual string GetDialogueText() {return null;}
-	public virtual string GetSpeakerName() {return null;}
-	public virtual Sprite GetPortrait() {return null;}
+	public virtual string GetDialogueText() => null;
+	public virtual string GetSpeakerName() => null;
+	public virtual Sprite GetPortrait() => null;
+	public virtual string GetPersonaJSON() => null;
+	public virtual bool UsesLLM() => false;
 
 	// called when node becomes active
 	public virtual void OnEnterNode() {}

@@ -19,25 +19,54 @@ public class DialogueNode : BaseNode {
 	[Tooltip("Reference to the next node for each choice. For linear nodes, set nextNodes[0] to the next node")]
 	public BaseNode[] nextNodes; // length N (must match choices), 1 for linear
 	
-	public override string GetNodeTypeString()
-    {
-        return "DialogueNode";
-    }
+	[Header("Persona metadata")]
+	[TextArea(4,10)] public string personaJSON;
 
-	public override string GetDialogueText()
-    {
-        return dialogueLine;
-    }
+	[Tooltip("Prompt for Qwen")]
+	[TextArea(4,12)] public string systemPrompt = "You're roleplaying the character described in the persona JSON.";
+	[TextArea(2,6)] public string userPrompt = "continue the conversation in character.";
 
-	public override string GetSpeakerName()
-    {
-        return speakerName;
-    }
+	[Header("LLM generation")]
+	public bool useLLM = false;
 
-	public override Sprite GetPortrait()
-    {
-        return portrait;
-    }
 
+	//public string[] tags; // emotion, tone, etc
+	public override bool UsesLLM() => useLLM;
+	public override string GetPersonaJSON() => personaJSON;
+	public override string GetNodeTypeString() {return "DialogueNode";}
+	public override string GetDialogueText() {return dialogueLine;}
+	public override string GetSpeakerName() {return speakerName;}
+	public override Sprite GetPortrait() {return portrait;}
 	public override object GetValue(NodePort port) { return null; }
+
+	public BaseNode GetNext(int index)
+    {
+        if (nextNodes == null || nextNodes.Length == 0) return null;
+		if (index < 0 || index >= nextNodes.Length) return null;
+		return nextNodes[index];
+    }
+
+	public bool IsBranching()
+    {
+        return choices != null && choices.Length > 1;
+    }
+
+	/// <summary>
+    /// Packs persona JSON + dialogue text into a Qwen prompt block.
+    /// Used if you want the LLM to generate the *next* line dynamically.
+    /// </summary>
+    public string BuildQwenPrompt()
+    {
+        return
+			$@"<persona>
+			{personaJSON}
+			</persona>
+
+			<context>
+			Speaker: {speakerName}
+			Line: {dialogueLine}
+			</context>
+
+			You are role-playing as the persona above. Respond concisely in character.";
+    }
 }
