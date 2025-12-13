@@ -603,7 +603,7 @@ MonoBehaviour:
   portrait: {fileID: 1140104611}
   choicesContainer: {fileID: 0}
   choiceButtonPrefab: {fileID: 0}
-  textRevealSpeed: 15
+  textRevealSpeed: 30
 --- !u!4 &938392885
 Transform:
   m_ObjectHideFlags: 0
@@ -816,8 +816,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -97, y: 2}
-  m_SizeDelta: {x: 160, y: 30}
+  m_AnchoredPosition: {x: 92.50952, y: -24.363}
+  m_SizeDelta: {x: 539.019, y: 82.725}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2143714076
 GameObject:

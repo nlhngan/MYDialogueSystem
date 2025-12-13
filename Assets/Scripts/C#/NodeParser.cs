@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using XNode;
 using System.Linq;
 
@@ -21,6 +22,7 @@ public class NodeParser : MonoBehaviour
     [Header("Settings")]
     public float textRevealSpeed = 0.0f;
     Coroutine parseCoroutine;
+    Coroutine textCoroutine;
 
     private void Start()
     {
@@ -43,42 +45,42 @@ public class NodeParser : MonoBehaviour
             BaseNode b = graph.current;
             b.OnEnterNode();
 
-            if (b is StartNode)
+            if (b is StartNode s)
             {
-                StartNode s = (StartNode)b;
                 graph.current = s.firstNode;
+                b.OnExitNode();
                 continue;
             } 
-            if (b is DialogueNode)
+            if (b is DialogueNode dn)
             {
-                DialogueNode dn = (DialogueNode)b;
                 // update UI
                 speaker.text = string.IsNullOrEmpty(dn.GetSpeakerName())? "" : dn.GetSpeakerName();
-                portrait.sprite = dn.GetPortrait();
-
+                portrait.sprite = dn.GetPortrait();              
+                dialogueText.text ="";
                 ClearChoiceButtons();
 
                 // show dialogue
-                // default static dialogue
-                if (!dn.UsesLLM())
-                {
-                    yield return DisplayText(dn.GetDialogueText());
-                }
-                else 
-                // LLM
-                {
-                    string llmText = null;
+                string textToDisplay;
 
-                    bool done = false;
-                    yield return qwen.Generate(
-                        dn.GetPersonaJSON(),
+                // LLM
+                if (dn.UsesLLM())
+                {
+                    textToDisplay = "[...]";
+                    yield return StartCoroutine( 
+                        qwen.Generate(dn.GetPersonaJSON(),
                         dn.systemPrompt,
                         dn.userPrompt,
-                        (resp) => {llmText=resp; done=true;}
-                    );
-                    yield return new WaitUntil(() => done);
-                    yield return DisplayText(llmText);
+                        resp => { if(!string.IsNullOrEmpty(resp)) textToDisplay = resp; }
+                    ));
                 }
+                else 
+                // default static dialogue
+                {
+                    textToDisplay = dn.GetDialogueText();
+                }
+                textCoroutine = StartCoroutine(DisplayText(textToDisplay));
+                yield return textCoroutine;
+                textCoroutine = null;
 
                 // branching if node has choices
                 if (dn.choices != null && dn.choices.Length > 0)
@@ -88,30 +90,20 @@ public class NodeParser : MonoBehaviour
                     for (int i = 0; i<choiceCount; i++)
                     {
                         int idx = i;
-                        // string label = dn.choices[i];
                         Button btn = Instantiate(choiceButtonPrefab, choicesContainer);
                         btn.GetComponentInChildren<Text>().text = dn.choices[i];
-                        // if (btnText != null) btnText.text = label;                
                         btn.onClick.AddListener(() => OnChoiceSelected(dn, idx));
                     }
                     // yield until graph.current changes away from dn
                     yield return new WaitUntil(() => graph.current!=dn);
-                } else
+                } 
+                else
                 {
                     // linear node; use nextNodes[0] as next if set
-                    BaseNode next= null;
-                    if (dn.nextNodes != null && dn.nextNodes.Length>0) next = dn.nextNodes[0];
-                    // wait for click to continue or end if no next
-                    if (next == null)
-                    {
-                        // wait for click to end dialogue then null current
-                        yield return WaitForClick();
-                        graph.current = null;
-                    } else
-                    {
-                        yield return WaitForClick();
-                        graph.current = next;
-                    }
+                    BaseNode next= (dn.nextNodes != null && dn.nextNodes.Length > 0) ? dn.nextNodes[0] : null;
+                    yield return WaitForClick();
+                    dn.OnExitNode();
+                    graph.current = next;
                 }            
             } else
             {
@@ -119,7 +111,7 @@ public class NodeParser : MonoBehaviour
                 graph.current = null;
             }
 
-            b.OnExitNode();
+            if (graph.current!=b) b.OnExitNode();
 
             // frame yield
             yield return null;
@@ -131,30 +123,37 @@ public class NodeParser : MonoBehaviour
     }
 
     IEnumerator DisplayText(string text)
-    {
-        if (textRevealSpeed <= 0f) dialogueText.text = text;
-        else
+    {       
+        if (string.IsNullOrEmpty(text)) yield break;
+
+        if (textRevealSpeed <= 0f)
         {
-            dialogueText.text ="";
-            float delay = 1f / Mathf.Max(0.0001f, textRevealSpeed); // ??
-            foreach (char c in text)
-            {
-                dialogueText.text += c;
-                yield return new WaitForSeconds(delay);
-            }
+            dialogueText.text=text;
+            yield break;
         }
-        
+        float delay = 1f / textRevealSpeed;
+        foreach (char c in text)
+        {
+            dialogueText.text += c;
+            yield return new WaitForSeconds(delay);
+        }
+        //yield return null;   
         
     }
 
     IEnumerator WaitForClick()
     {
-        yield return new WaitUntil(()=> Input.GetMouseButtonDown(0));
+        yield return new WaitUntil(() =>
+        Input.GetMouseButtonDown(0) &&
+        !EventSystem.current.IsPointerOverGameObject()
+        );
         yield return new WaitUntil(()=> Input.GetMouseButtonUp(0));
     }
 
     void OnChoiceSelected(DialogueNode node, int index)
     {
+        ClearChoiceButtons();
+        node.OnExitNode();
         if (node.nextNodes == null || index < 0 || index>= node.nextNodes.Length)
         {
             Debug.LogWarning("no corresponding next node defined. ending dialogue");

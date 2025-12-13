@@ -42,17 +42,16 @@ Respond in character.";
         using (UnityWebRequest req = new UnityWebRequest(ollamaURL, "POST")) {
             req.uploadHandler = new UploadHandlerRaw(body);
             req.downloadHandler = new DownloadHandlerBuffer();
+            req.timeout = 15;
             req.SetRequestHeader("Content-Type", "application/json");
 
             yield return req.SendWebRequest();
-            //Debug.Log("Server returned: " + req.downloadHandler.text);
 
             if (req.result != UnityWebRequest.Result.Success) {
                 Debug.LogError("Ollama error: " + req.error);
                 callback?.Invoke("[LLM Error]");
             } else {
                 var result = JsonUtility.FromJson<OllamaResponse>(req.downloadHandler.text);
-                //Debug.Log("Raw Ollama response: " + req.downloadHandler.text);
                 callback?.Invoke(result.response);
             }
         }
