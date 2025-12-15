@@ -11,6 +11,8 @@ public class NodeParser : MonoBehaviour
     [Header("Reference")]
     public QwenRuntime qwen;
     public DialogueGraph graph;
+    private NPCProfile currentNPC;
+    private DialogueContext context;
 
     [Header("UI")]
     public Text speaker;
@@ -35,7 +37,22 @@ public class NodeParser : MonoBehaviour
         }
 
         graph.current = start;
-        parseCoroutine = StartCoroutine(ParseNodeRoutine());
+        // parseCoroutine = StartCoroutine(ParseNodeRoutine());
+    }
+
+    public void StartDialogue(DialogueGraph graph, NPCProfile npc, DialogueContext context)
+    {
+        StopAllCoroutines();
+        ClearChoiceButtons();
+
+        DialogueEvents.OnDialogueStarted?.Invoke();
+
+        this.graph = graph;
+        this.currentNPC=npc;
+        this.context = context;
+
+        graph.current = graph.nodes.OfType<StartNode>().FirstOrDefault();
+        StartCoroutine(ParseNodeRoutine());
     }
 
     IEnumerator ParseNodeRoutine()
@@ -81,6 +98,7 @@ public class NodeParser : MonoBehaviour
                 textCoroutine = StartCoroutine(DisplayText(textToDisplay));
                 yield return textCoroutine;
                 textCoroutine = null;
+                DialogueEvents.OnLineSpoken?.Invoke(textToDisplay);
 
                 // branching if node has choices
                 if (dn.choices != null && dn.choices.Length > 0)
@@ -92,7 +110,14 @@ public class NodeParser : MonoBehaviour
                         int idx = i;
                         Button btn = Instantiate(choiceButtonPrefab, choicesContainer);
                         btn.GetComponentInChildren<Text>().text = dn.choices[i];
-                        btn.onClick.AddListener(() => OnChoiceSelected(dn, idx));
+                        btn.onClick.AddListener(() =>
+                        {
+                            // disable all buttons
+                            foreach (Button b in choicesContainer.GetComponentsInChildren<Button>())
+                                b.interactable = false;
+
+                            OnChoiceSelected(dn, idx);
+                        });
                     }
                     // yield until graph.current changes away from dn
                     yield return new WaitUntil(() => graph.current!=dn);
@@ -120,7 +145,10 @@ public class NodeParser : MonoBehaviour
         // end dialogue
         parseCoroutine = null;
         Debug.Log("dialogue finished");
+        DialogueEvents.OnDialogueEnded?.Invoke();
     }
+
+    
 
     IEnumerator DisplayText(string text)
     {       
@@ -135,6 +163,7 @@ public class NodeParser : MonoBehaviour
         foreach (char c in text)
         {
             dialogueText.text += c;
+            // prevent interruption / display when clicked
             yield return new WaitForSeconds(delay);
         }
         //yield return null;   
@@ -153,7 +182,7 @@ public class NodeParser : MonoBehaviour
     void OnChoiceSelected(DialogueNode node, int index)
     {
         ClearChoiceButtons();
-        node.OnExitNode();
+        DialogueEvents.OnChoiceSelected?.Invoke(node.choices[index]);
         if (node.nextNodes == null || index < 0 || index>= node.nextNodes.Length)
         {
             Debug.LogWarning("no corresponding next node defined. ending dialogue");
