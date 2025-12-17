@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: kittyNPC
   m_EditorClassIdentifier: 
   npcName: kitty
-  personaJSON: "{\n    \"name\": \"kitty\",\n    \"bio\": \"A talktative NPC kitty.\",\n   
-    \"dialogue line\": \"meow meow meow! i was so bored and sad. where do you wanna
-    go?\",\n    \"constraints\": \"Keep responses short.\"\n}"
+  speakingStyle: whimsy
+  constraints:
+  - keep response short, speak informally

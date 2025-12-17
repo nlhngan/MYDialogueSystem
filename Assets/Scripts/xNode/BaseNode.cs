@@ -22,6 +22,7 @@ public abstract class BaseNode : Node {
 	public virtual string GetSpeakerName() => null;
 	public virtual Sprite GetPortrait() => null;
 	public virtual string GetPersonaJSON() => null;
+	public virtual string GetUserInput() => null;
 	public virtual bool UsesLLM() => false;
 
 	// called when node becomes active
