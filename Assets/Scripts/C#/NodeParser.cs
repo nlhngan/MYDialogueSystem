@@ -26,23 +26,11 @@ public class NodeParser : MonoBehaviour
     Coroutine parseCoroutine;
     Coroutine textCoroutine;
 
-    private void Start()
-    {
-        // find StartNode in graph
-        StartNode start = graph.nodes.OfType<StartNode>().FirstOrDefault();
-        if (start == null)
-        {
-            Debug.LogError("NodeParser: no start node found in graph");
-            return;
-        }
-
-        graph.current = start;
-        // parseCoroutine = StartCoroutine(ParseNodeRoutine());
-    }
-
     public void StartDialogue(DialogueGraph graph, NPCProfile npc, DialogueContext context)
     {
-        StopAllCoroutines();
+        if (parseCoroutine != null) StopCoroutine(parseCoroutine);
+        if (textCoroutine != null) StopCoroutine(textCoroutine);
+
         ClearChoiceButtons();
 
         DialogueEvents.OnDialogueStarted?.Invoke();
@@ -51,8 +39,9 @@ public class NodeParser : MonoBehaviour
         this.currentNPC=npc;
         this.context = context;
 
-        graph.current = graph.nodes.OfType<StartNode>().FirstOrDefault();
-        StartCoroutine(ParseNodeRoutine());
+        qwen.CompilePersona(npc.npcName, npc.speakingStyle, npc.constraints);
+
+        StartCoroutine(StartDialogueRoutine()); 
     }
 
     IEnumerator ParseNodeRoutine()
@@ -84,9 +73,8 @@ public class NodeParser : MonoBehaviour
                 {
                     textToDisplay = "[...]";
                     yield return StartCoroutine( 
-                        qwen.Generate(dn.GetPersonaJSON(),
-                        dn.systemPrompt,
-                        dn.userPrompt,
+                        qwen.Generate(
+                        dn.userInput,
                         resp => { if(!string.IsNullOrEmpty(resp)) textToDisplay = resp; }
                     ));
                 }
@@ -148,7 +136,12 @@ public class NodeParser : MonoBehaviour
         DialogueEvents.OnDialogueEnded?.Invoke();
     }
 
-    
+    IEnumerator StartDialogueRoutine()
+    {
+        yield return StartCoroutine(qwen.WarmUp());
+        graph.current = graph.nodes.OfType<StartNode>().FirstOrDefault();
+        parseCoroutine = StartCoroutine(ParseNodeRoutine());
+    }
 
     IEnumerator DisplayText(string text)
     {       
@@ -163,7 +156,7 @@ public class NodeParser : MonoBehaviour
         foreach (char c in text)
         {
             dialogueText.text += c;
-            // prevent interruption / display when clicked
+            // add prevent interruption / display when clicked
             yield return new WaitForSeconds(delay);
         }
         //yield return null;   

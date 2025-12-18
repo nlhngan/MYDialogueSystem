@@ -11,6 +11,6 @@ public class DialogueTestStarter : MonoBehaviour
 
     void Start()
     {
-        parser.StartDialogue(graph,npc,context);
+       parser.StartDialogue(graph,npc,context);
     }
 }

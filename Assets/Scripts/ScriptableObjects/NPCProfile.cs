@@ -6,5 +6,7 @@ using UnityEngine;
 public class NPCProfile : ScriptableObject
 {
     public string npcName;
-    [TextArea(6,12)] public string personaJSON;
+    public string speakingStyle;
+    public string[] constraints;
+    //[TextArea(6,12)] public string personaJSON;
 }
