@@ -45,13 +45,12 @@ MonoBehaviour:
   output: 0
   portrait: {fileID: 10917, guid: 0000000000000000f000000000000000, type: 0}
   speakerName: 
-  dialogueLine: first day and you're fired already...maybe try a little self-reflection
-    after this?
+  dialogueLine: losing your job on the first day is quite problematic...maybe try
+    a little self-reflection after this?
   choices: []
   nextNodes: []
-  userInput: paraphrase "first day and you're fired already...maybe try a little
-    self-reflection after this?"
-  useLLM: 1
+  userInput: 
+  useLLM: 0
 --- !u!114 &-8084665756074892455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -385,7 +384,7 @@ MonoBehaviour:
   speakerName: 
   dialogueLine: ...
   choices:
-  - well you are so annoying. all you do is complaining
+  - you are so annoying. all you do is complaining
   - sorry...i'm struggling financially
   nextNodes:
   - {fileID: 6686142963488811725}
@@ -472,7 +471,7 @@ MonoBehaviour:
   - {fileID: 6085215514040889824}
   - {fileID: -8917669545632850648}
   - {fileID: 4909727240568079976}
-  current: {fileID: 0}
+  current: {fileID: 6686142963488811725}
 --- !u!114 &2182344023817487821
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -827,8 +826,8 @@ MonoBehaviour:
   choices: []
   nextNodes:
   - {fileID: -8917669545632850648}
-  userInput: dialogue line for npc 'kitty.' player said something horrible. kitty
-    is sad now.
+  userInput: paraphrase "you are so unkind. this is your first and last day on this
+    job"
   useLLM: 1
 --- !u!114 &7203753709353836927
 MonoBehaviour:

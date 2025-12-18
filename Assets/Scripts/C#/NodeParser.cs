@@ -8,12 +8,15 @@ using System.Linq;
 
 public class NodeParser : MonoBehaviour
 {
+    #region references
     [Header("Reference")]
     public QwenRuntime qwen;
     public DialogueGraph graph;
     private NPCProfile currentNPC;
     private DialogueContext context;
+    #endregion
 
+    #region UI + settings
     [Header("UI")]
     public Text speaker;
     public Text dialogueText;
@@ -25,13 +28,16 @@ public class NodeParser : MonoBehaviour
     public float textRevealSpeed = 0.0f;
     Coroutine parseCoroutine;
     Coroutine textCoroutine;
+    #endregion
 
+    #region public api
     public void StartDialogue(DialogueGraph graph, NPCProfile npc, DialogueContext context)
     {
         if (parseCoroutine != null) StopCoroutine(parseCoroutine);
         if (textCoroutine != null) StopCoroutine(textCoroutine);
 
         ClearChoiceButtons();
+        choicesContainer.gameObject.SetActive(false);
 
         DialogueEvents.OnDialogueStarted?.Invoke();
 
@@ -42,6 +48,15 @@ public class NodeParser : MonoBehaviour
         qwen.CompilePersona(npc.npcName, npc.speakingStyle, npc.constraints);
 
         StartCoroutine(StartDialogueRoutine()); 
+    }
+    #endregion
+
+    #region dialoge flow
+    IEnumerator StartDialogueRoutine()
+    {
+        yield return StartCoroutine(qwen.WarmUp());
+        graph.current = graph.nodes.OfType<StartNode>().FirstOrDefault();
+        parseCoroutine = StartCoroutine(ParseNodeRoutine());
     }
 
     IEnumerator ParseNodeRoutine()
@@ -64,6 +79,7 @@ public class NodeParser : MonoBehaviour
                 portrait.sprite = dn.GetPortrait();              
                 dialogueText.text ="";
                 ClearChoiceButtons();
+                choicesContainer.gameObject.SetActive(false);
 
                 // show dialogue
                 string textToDisplay;
@@ -91,6 +107,7 @@ public class NodeParser : MonoBehaviour
                 // branching if node has choices
                 if (dn.choices != null && dn.choices.Length > 0)
                 {
+                    choicesContainer.gameObject.SetActive(true);
                     // build buttons
                     int choiceCount = dn.choices.Length;
                     for (int i = 0; i<choiceCount; i++)
@@ -135,14 +152,9 @@ public class NodeParser : MonoBehaviour
         Debug.Log("dialogue finished");
         DialogueEvents.OnDialogueEnded?.Invoke();
     }
+    #endregion
 
-    IEnumerator StartDialogueRoutine()
-    {
-        yield return StartCoroutine(qwen.WarmUp());
-        graph.current = graph.nodes.OfType<StartNode>().FirstOrDefault();
-        parseCoroutine = StartCoroutine(ParseNodeRoutine());
-    }
-
+    #region utility
     IEnumerator DisplayText(string text)
     {       
         if (string.IsNullOrEmpty(text)) yield break;
@@ -175,6 +187,8 @@ public class NodeParser : MonoBehaviour
     void OnChoiceSelected(DialogueNode node, int index)
     {
         ClearChoiceButtons();
+        choicesContainer.gameObject.SetActive(false);
+
         DialogueEvents.OnChoiceSelected?.Invoke(node.choices[index]);
         if (node.nextNodes == null || index < 0 || index>= node.nextNodes.Length)
         {
@@ -194,4 +208,5 @@ public class NodeParser : MonoBehaviour
             Destroy(choicesContainer.GetChild(i).gameObject);
         }
     }
+    #endregion
 }

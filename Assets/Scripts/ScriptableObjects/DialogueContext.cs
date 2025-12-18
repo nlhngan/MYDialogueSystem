@@ -8,5 +8,5 @@ public class DialogueContext : ScriptableObject
     public string npcName;
     public string location;
     public List<string> conversationHistory = new();
-    public Dictionary<string,string> flags = new(); // past choices + state
+    public Dictionary<string,string> flags = new(); // later
 }
