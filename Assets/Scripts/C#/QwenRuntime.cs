@@ -5,18 +5,14 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 public class QwenRuntime : MonoBehaviour {
-
-    [Header("Ollama")]
-    //private string modelName = "hopephoto/Qwen3-4B-Instruct-2507_q8";
-    private string modelName = "gemma2:2b-instruct-q3_K_M";
-    //private string ollamaURL = "http://localhost:11434/api/generate";
-    private string llamacpp = "http://<server>:8080/v1/chat/completions";
+    private string llamacpp = "http://localhost:8080/v1/chat/completions";
 
     [Header("Generation config")]
+    public float temperature = 0.7f;
     [Range(16,256)] public int maxTokens = 32;
     [Range(512,4096)] public int contextSize = 512;
     // cached n compiled persona
-    private string compiledPersonaPrompt;
+    private string compiledPersonaPrompt = "";
     private bool isWarmedUp = false;
     public QwenRuntime(){}
 
@@ -29,9 +25,12 @@ public class QwenRuntime : MonoBehaviour {
         if (constraints != null && constraints.Length>0)
         {
             sb.AppendLine("constraints: ");
+            sb.AppendLine("stay in character.");
+            sb.AppendLine("do NOT wrap responses in quotes or include system tokens.");
+
             for (int i = 0; i<constraints.Length; ++i)
             {
-                sb.AppendLine($"{constraints[i]}, ");
+                sb.AppendLine($"- {constraints[i]}");
             }
         }
         compiledPersonaPrompt = sb.ToString();
@@ -42,7 +41,7 @@ public class QwenRuntime : MonoBehaviour {
     {
         if (isWarmedUp) yield break;
         Debug.Log("[LLM] warm up start");
-        yield return Generate("greeting.", _ => {isWarmedUp=true;});
+        yield return Generate("ping", _ => {isWarmedUp=true;});
         Debug.Log("[LLM] warm up done");
     }
 
@@ -51,14 +50,23 @@ public class QwenRuntime : MonoBehaviour {
         string userInput,
         Action<string> callback)
     {
-        // construct final prompt
-        string prompt = BuildPrompt(userInput);
-
-        var payload = new OllamaRequest{
-            model = modelName,
-            prompt = prompt,
-            num_predict = maxTokens,
-            options = new OllamaOptions{num_ctx = contextSize}
+        var payload = new ChatRequest{
+            max_tokens = maxTokens,
+            messages = new[]
+            {
+                new ChatMessage {role="system", content=compiledPersonaPrompt},
+                new ChatMessage {role="user", content=userInput}
+            },
+            stop = new[]
+            {
+                "<|im_end|>",
+                "<|im_start|>",
+                "<p>",
+                "</p>",
+                "\nUSER:",
+                "\nASSISTANT:"
+            },
+            temperature = temperature
         };
 
         string json = JsonUtility.ToJson(payload);
@@ -69,52 +77,55 @@ public class QwenRuntime : MonoBehaviour {
             req.downloadHandler = new DownloadHandlerBuffer();
             req.timeout = 15;
             req.SetRequestHeader("Content-Type", "application/json");
+            req.SetRequestHeader("Accept", "application/json");
+            req.SetRequestHeader("Authorization", "Bearer dummy"); // remove this later
+
 
             yield return req.SendWebRequest();
 
             if (req.result != UnityWebRequest.Result.Success) {
-                Debug.LogError("Ollama error: " + req.error);
+                Debug.LogError("error: " + req.error);
                 callback?.Invoke("[LLM Error]");
                 yield break;
             } 
-            var result = JsonUtility.FromJson<OllamaResponse>(req.downloadHandler.text);
-            callback?.Invoke(result.response);
+            var result = JsonUtility.FromJson<ChatResponse>(req.downloadHandler.text);
+            if (result.choices == null || result.choices.Length == 0)
+            {
+                callback?.Invoke("[LLM Empty Response]");
+                yield break;
+            }
+            callback?.Invoke(CleanLLMOutput(result.choices[0].message.content));
         }
     }
 
-    private string BuildPrompt(string userInput)
+    string CleanLLMOutput(string text)
     {
-        return
-$@"SYSTEM:
-{compiledPersonaPrompt}
+        if (string.IsNullOrEmpty(text)) return text;
 
-USER: {userInput}
+        text = text.Trim();
 
-respond in character, briefly.";
+        if (text.Length >= 2 && text[0] == '"' && text[^1] == '"')
+            text = text.Substring(1, text.Length - 2);
+        text = text.Replace("<|im_end|>", "")
+                .Replace("<|im_start|>", "")
+                .Replace("<p>","")
+                .Replace("</p>","")
+                .Trim();
+        return text;
     }
+
 
 #endregion
 
 #region data
 
-    // [Serializable]
-    // private class OllamaRequest {
-    //     public string model;
-    //     public string prompt;
-    //     public bool stream;
-    //     public int num_predict;
-    //     public OllamaOptions options;
-    // }
-
-    // [Serializable] private class OllamaResponse {public string response;}
-    // [Serializable] private class OllamaOptions {public int num_ctx;}
-    // [Serializable] private class OllamaStreamResponse {public string response;}
     [Serializable]
     private class ChatRequest
     {
-        public string model;
-        public ChatMessage[] messages;
         public int max_tokens;
+        public float temperature;
+        public ChatMessage[] messages;
+        public string[] stop; 
     }
 
     [Serializable]
@@ -124,5 +135,8 @@ respond in character, briefly.";
         public string content;
     }
 
+    [Serializable] private class ChatResponse {public Choice[] choices;}
+    [Serializable] private class Choice {public Message message;}
+    [Serializable] private class Message {public string content;}
 }
 #endregion

@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: testContext
   m_EditorClassIdentifier: 
   npcName: kitty
-  location: kitty's home
+  location: 
   conversationHistory: []

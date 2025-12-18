@@ -405,7 +405,7 @@ MonoBehaviour:
   m_Name: Dialogue
   m_EditorClassIdentifier: 
   graph: {fileID: 11400000}
-  position: {x: -664, y: -1688}
+  position: {x: -664, y: -1736}
   ports:
     keys:
     - input
@@ -440,8 +440,8 @@ MonoBehaviour:
   dialogueLine: you're the best! i'll make sure to put in a good word for you!
   choices: []
   nextNodes: []
-  userInput: 
-  useLLM: 0
+  userInput: dialogue line for npc 'kitty'. player just bought ice cream for kitty.
+  useLLM: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -664,7 +664,8 @@ MonoBehaviour:
   dialogueLine: the show was so boring kitty fell asleep!
   choices: []
   nextNodes: []
-  userInput: paraphrase "the show was so boring kitty fell asleep!"
+  userInput: dialogue line for npc 'kitty'. kitty was watching tv with the caretaker
+    then fell asleep
   useLLM: 1
 --- !u!114 &6085215514040889824
 MonoBehaviour:
@@ -822,14 +823,13 @@ MonoBehaviour:
   output: 0
   portrait: {fileID: 21300000, guid: 89e904e600415404180c3c5e16917388, type: 3}
   speakerName: kitty
-  dialogueLine: it's because you're not doing your job properly!! i can tell you
-    don't even like cats!! you're a shallow and materialistic person and i hope i'll
-    never have to deal with you ever again!!!!!
+  dialogueLine: ...sob...
   choices: []
   nextNodes:
-  - {fileID: -2824401752779583508}
-  userInput: 
-  useLLM: 0
+  - {fileID: -8917669545632850648}
+  userInput: dialogue line for npc 'kitty.' player said something horrible. kitty
+    is sad now.
+  useLLM: 1
 --- !u!114 &7203753709353836927
 MonoBehaviour:
   m_ObjectHideFlags: 0
