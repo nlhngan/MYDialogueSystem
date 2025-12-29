@@ -532,7 +532,7 @@ MonoBehaviour:
   parser: {fileID: 1089747330}
   graph: {fileID: 11400000, guid: 4e78199f2a8e1004f8e2172fc0f7d4e4, type: 2}
   npc: {fileID: 11400000, guid: 0ed7a5096c1bec14ebbe1e009320634b, type: 2}
-  context: {fileID: 0}
+  context: {fileID: 11400000, guid: 47d5d02f96fe2b148852cace94e87546, type: 2}
 --- !u!4 &788732732
 Transform:
   m_ObjectHideFlags: 0
@@ -660,7 +660,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 129208aa0d499084daba9d2d5392d384, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  qwen: {fileID: 1772248073}
+  llm: {fileID: 1772248073}
   graph: {fileID: 11400000, guid: 4e78199f2a8e1004f8e2172fc0f7d4e4, type: 2}
   speaker: {fileID: 727858829}
   dialogueText: {fileID: 1883376085}
@@ -856,7 +856,7 @@ GameObject:
   - component: {fileID: 1772248074}
   - component: {fileID: 1772248073}
   m_Layer: 0
-  m_Name: QwenRuntime
+  m_Name: LLM
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

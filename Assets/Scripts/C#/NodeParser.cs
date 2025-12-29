@@ -10,7 +10,7 @@ public class NodeParser : MonoBehaviour
 {
     #region references
     [Header("Reference")]
-    public QwenRuntime qwen;
+    public LLMService llm;
     public DialogueGraph graph;
     private NPCProfile currentNPC;
     private DialogueContext context;
@@ -45,7 +45,7 @@ public class NodeParser : MonoBehaviour
         this.currentNPC=npc;
         this.context = context;
 
-        qwen.CompilePersona(npc.npcName, npc.speakingStyle, npc.constraints);
+        llm.CompilePersona(npc.npcName, npc.speakingStyle, npc.constraints);
 
         StartCoroutine(StartDialogueRoutine()); 
     }
@@ -54,7 +54,7 @@ public class NodeParser : MonoBehaviour
     #region dialoge flow
     IEnumerator StartDialogueRoutine()
     {
-        yield return StartCoroutine(qwen.WarmUp());
+        yield return StartCoroutine(llm.WarmUp());
         graph.current = graph.nodes.OfType<StartNode>().FirstOrDefault();
         parseCoroutine = StartCoroutine(ParseNodeRoutine());
     }
@@ -89,7 +89,7 @@ public class NodeParser : MonoBehaviour
                 {
                     textToDisplay = "[...]";
                     yield return StartCoroutine( 
-                        qwen.Generate(
+                        llm.Generate(
                         dn.userInput,
                         resp => { if(!string.IsNullOrEmpty(resp)) textToDisplay = resp; }
                     ));

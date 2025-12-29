@@ -4,7 +4,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class QwenRuntime : MonoBehaviour {
+public class LLMService : MonoBehaviour {
     private string llamacpp = "http://localhost:8080/v1/chat/completions";
 
     [Header("Generation config")]
@@ -14,7 +14,7 @@ public class QwenRuntime : MonoBehaviour {
     // cached n compiled persona
     private string compiledPersonaPrompt = "";
     private bool isWarmedUp = false;
-    public QwenRuntime(){}
+    public LLMService(){}
 
     public void CompilePersona(string speakerName, string style, string[] constraints)
     {
