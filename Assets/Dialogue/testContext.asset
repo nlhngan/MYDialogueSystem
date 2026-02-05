@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e37b154d89d2614eb7df6c9e1d8cb2b, type: 3}
   m_Name: testContext
   m_EditorClassIdentifier: 
-  npcName: kitty
+  npcName: 
   location: 
   conversationHistory: []

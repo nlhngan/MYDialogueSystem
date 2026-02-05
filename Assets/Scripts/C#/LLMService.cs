@@ -4,17 +4,17 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
 
-public class QwenRuntime : MonoBehaviour {
+public class LLMService : MonoBehaviour {
     private string llamacpp = "http://localhost:8080/v1/chat/completions";
 
     [Header("Generation config")]
     public float temperature = 0.7f;
     [Range(16,256)] public int maxTokens = 32;
-    [Range(512,4096)] public int contextSize = 512;
+    // [Range(512,4096)] public int contextSize = 512;
     // cached n compiled persona
     private string compiledPersonaPrompt = "";
     private bool isWarmedUp = false;
-    public QwenRuntime(){}
+    public LLMService(){}
 
     public void CompilePersona(string speakerName, string style, string[] constraints)
     {
@@ -41,19 +41,17 @@ public class QwenRuntime : MonoBehaviour {
     {
         if (isWarmedUp) yield break;
         Debug.Log("[LLM] warm up start");
-        yield return Generate("ping", _ => {isWarmedUp=true;});
+        yield return Generate("ping", null, _ => {isWarmedUp=true;});
         Debug.Log("[LLM] warm up done");
     }
 
 #region internals
-    public IEnumerator Generate(
-        string userInput,
-        Action<string> callback)
+    public IEnumerator Generate(string userInput, Action<string> onTokenReceived, Action<string> onComplete)
     {
         var payload = new ChatRequest{
             max_tokens = maxTokens,
-            messages = new[]
-            {
+            stream = true,
+            messages = new[] {
                 new ChatMessage {role="system", content=compiledPersonaPrompt},
                 new ChatMessage {role="user", content=userInput}
             },
@@ -74,27 +72,50 @@ public class QwenRuntime : MonoBehaviour {
 
         using (UnityWebRequest req = new UnityWebRequest(llamacpp, "POST")) {
             req.uploadHandler = new UploadHandlerRaw(body);
+            // read incrementally
             req.downloadHandler = new DownloadHandlerBuffer();
             req.timeout = 15;
             req.SetRequestHeader("Content-Type", "application/json");
-            req.SetRequestHeader("Accept", "application/json");
-            req.SetRequestHeader("Authorization", "Bearer dummy"); // remove this later
 
+            AsyncOperation op = req.SendWebRequest();
+            int lastPos = 0;
+            StringBuilder fullResponse = new StringBuilder();
 
-            yield return req.SendWebRequest();
-
-            if (req.result != UnityWebRequest.Result.Success) {
-                Debug.LogError("error: " + req.error);
-                callback?.Invoke("[LLM Error]");
-                yield break;
-            } 
-            var result = JsonUtility.FromJson<ChatResponse>(req.downloadHandler.text);
-            if (result.choices == null || result.choices.Length == 0)
+            while (!op.isDone)
             {
-                callback?.Invoke("[LLM Empty Response]");
-                yield break;
+                string currentText = req.downloadHandler.text;
+                if (currentText.Length > lastPos)
+                {
+                    string newChunk = currentText.Substring(lastPos);
+                    lastPos = currentText.Length;
+                    ProcessStreamChunk(newChunk,(token)=>
+                    {
+                        fullResponse.Append(token);
+                        onTokenReceived?.Invoke(token); //update ui
+                    });
+                }
+                yield return null;
             }
-            callback?.Invoke(CleanLLMOutput(result.choices[0].message.content));
+
+            onComplete?.Invoke(CleanLLMOutput(fullResponse.ToString()));
+        }
+    }
+
+    private void ProcessStreamChunk(string chunk, Action<string> onToken)
+    {
+        string[] lines = chunk.Split('\n');
+        foreach (string line in lines)
+        {
+            if (line.StartsWith("data: ") && !line.Contains("[DONE]"))
+            {
+                string json = line.Substring(6);
+                try
+                {
+                    var delta = JsonUtility.FromJson<StreamResponse>(json);
+                    string content = delta.choices[0].delta.content;
+                    if (!string.IsNullOrEmpty(content)) onToken(content);
+                } catch {}
+            }
         }
     }
 
@@ -123,6 +144,7 @@ public class QwenRuntime : MonoBehaviour {
     private class ChatRequest
     {
         public int max_tokens;
+        public bool stream;
         public float temperature;
         public ChatMessage[] messages;
         public string[] stop; 
@@ -135,8 +157,8 @@ public class QwenRuntime : MonoBehaviour {
         public string content;
     }
 
-    [Serializable] private class ChatResponse {public Choice[] choices;}
-    [Serializable] private class Choice {public Message message;}
-    [Serializable] private class Message {public string content;}
+    [Serializable] private class StreamResponse { public StreamChoice[] choices; }
+    [Serializable] private class StreamChoice { public Delta delta; }
+    [Serializable] private class Delta { public string content; }
 }
 #endregion
