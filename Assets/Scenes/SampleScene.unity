@@ -532,7 +532,7 @@ MonoBehaviour:
   parser: {fileID: 1089747330}
   graph: {fileID: 11400000, guid: 4e78199f2a8e1004f8e2172fc0f7d4e4, type: 2}
   npc: {fileID: 11400000, guid: 0ed7a5096c1bec14ebbe1e009320634b, type: 2}
-  context: {fileID: 0}
+  context: {fileID: 11400000, guid: 47d5d02f96fe2b148852cace94e87546, type: 2}
 --- !u!4 &788732732
 Transform:
   m_ObjectHideFlags: 0
@@ -660,7 +660,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 129208aa0d499084daba9d2d5392d384, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  llm: {fileID: 0}
+  llm: {fileID: 1791887577}
   graph: {fileID: 11400000, guid: 4e78199f2a8e1004f8e2172fc0f7d4e4, type: 2}
   speaker: {fileID: 727858829}
   dialogueText: {fileID: 1883376085}
@@ -854,6 +854,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1791887576}
+  - component: {fileID: 1791887577}
   m_Layer: 0
   m_Name: LLMService
   m_TagString: Untagged
@@ -876,6 +877,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1791887577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1791887575}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e4c0fb9acb1f6bc4bad1c92b50e6319d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  temperature: 0.7
+  maxTokens: 70
 --- !u!1 &1883376084
 GameObject:
   m_ObjectHideFlags: 0
@@ -952,8 +967,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 92.50952, y: -24.363}
-  m_SizeDelta: {x: 539.019, y: 82.725}
+  m_AnchoredPosition: {x: 92.50952, y: -19.8611}
+  m_SizeDelta: {x: 539.019, y: 91.7289}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2143714076
 GameObject:
